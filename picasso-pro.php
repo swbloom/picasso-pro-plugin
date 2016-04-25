@@ -116,3 +116,88 @@ function quote_shortcode( $atts, $content = null ) {
   return '<div class="quote">' . $content . '</div>';
 }
 add_shortcode( 'quote', 'quote_shortcode' );
+
+function link_shortcode( $atts, $content = null ) {
+  $a = shortcode_atts( array(
+    'href' => 'link',
+  ), $atts );
+
+  return '<a href="' . esc_attr($a['href']) . '" class="permalink">' . $content . '</a>';
+}
+add_shortcode( 'link', 'link_shortcode' );
+
+/**
+  * Remove 'posts' from menu
+  * @since Picasso Pro 1.0
+  */
+function remove_menus(){
+  remove_menu_page( 'edit.php' );
+}
+add_action( 'admin_menu', 'remove_menus' );
+
+/**
+  * Give editors permission to edit site appearance
+  * @since Picasso Pro 1.0
+  */
+// get the the role object
+$role_object = get_role('editor');
+
+// add $cap capability to this role object
+$role_object->add_cap( 'edit_theme_options' );
+
+add_filter( 'comment_form_default_fields', 'pp_comment_placeholders' );
+
+/**
+ * Change default fields, add placeholder and change type attributes.
+ *
+ * @param  array $fields
+ * @return array
+ */
+function pp_comment_placeholders( $fields )
+{
+    $fields['author'] = str_replace(
+        '<input',
+        '<input placeholder="'
+        /* Replace 'theme_text_domain' with your theme’s text domain.
+         * I use _x() here to make your translators life easier. :)
+         * See http://codex.wordpress.org/Function_Reference/_x
+         */
+            . _x(
+                'Name *',
+                'comment form placeholder',
+                'pp'
+                )
+            . '"',
+        $fields['author']
+    );
+    $fields['email'] = str_replace(
+        '<input id="email" name="email" type="email"',
+        /* We use a proper type attribute to make use of the browser’s
+         * validation, and to get the matching keyboard on smartphones.
+         */
+        '<input type="email" placeholder="Email *"  id="email" name="email"',
+        $fields['email']
+    );
+    $fields['url'] = str_replace(
+        '<input id="url" name="url" type="url"',
+        // Again: a better 'type' attribute value.
+        '<input placeholder="Website" id="url" name="url" type="url"',
+        $fields['url']
+    );
+
+    return $fields;
+}
+function wpb_move_comment_field_to_bottom_add_placeholder( $fields ) {
+$comment_field = $fields['comment'];
+$comment_field = str_replace(
+  '<textarea id="comment"',
+  '<textarea placeholder="Comment" id="comment"',
+  $fields['comment']
+);
+unset( $fields['comment'] );
+$fields['comment'] = $comment_field; 
+
+return $fields;
+}
+
+add_filter( 'comment_form_fields', 'wpb_move_comment_field_to_bottom_add_placeholder' );
